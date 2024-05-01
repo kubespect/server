@@ -31,7 +31,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-//Client struct for websocket connection and message sending
+// Client struct for websocket connection and message sending
 type Client struct {
 	ID   string
 	Conn *websocket.Conn
@@ -39,12 +39,12 @@ type Client struct {
 	hub  *Hub
 }
 
-//NewClient creates a new client
+// NewClient creates a new client
 func NewClient(id string, conn *websocket.Conn, hub *Hub) *Client {
 	return &Client{ID: id, Conn: conn, send: make(chan Message, 256), hub: hub}
 }
 
-//Client goroutine to read messages from client
+// Client goroutine to read messages from client
 func (c *Client) Read() {
 
 	defer func() {
@@ -66,7 +66,7 @@ func (c *Client) Read() {
 	}
 }
 
-//Client goroutine to write messages to client
+// Client goroutine to write messages to client
 func (c *Client) Write() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
@@ -99,12 +99,12 @@ func (c *Client) Write() {
 	}
 }
 
-//Client closing channel to unregister client
+// Client closing channel to unregister client
 func (c *Client) Close() {
 	close(c.send)
 }
 
-//Function to handle websocket connection and register client to hub and start goroutines
+// Function to handle websocket connection and register client to hub and start goroutines
 func ServeWS(ctx *gin.Context, roomId string, hub *Hub) {
 	fmt.Print(roomId)
 	ws, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)

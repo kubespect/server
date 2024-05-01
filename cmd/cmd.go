@@ -19,7 +19,7 @@ func Start() {
 	app.GET("/ws/:roomId", func(c *gin.Context) {
 		roomId := c.Param("roomId")
 		ws.ServeWS(c, roomId, hub)
-		
+
 	})
 
 	log.Println(app.Run(":8080"))
