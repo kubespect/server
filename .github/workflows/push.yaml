@@ -1,0 +1,44 @@
+# main 브랜치에 push 이벤트가 발생 시 발동
+name: "Workflow : Push"
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    secrets:
+      DOCKERHUB_USERNAME:
+        required: true
+      DOCKERHUB_TOKEN:
+        required: true
+
+jobs:
+  # 변경사항 스캔
+  scan-changes:
+    uses: kubespect/actions/.github/workflows/operation_scan.yaml@main           # Scan Changes Workflow 호출
+    with:
+      FIRST_COMMIT: ${{ github.event.before }}              # 푸시 이전 마지막 커밋 SHA
+      LAST_COMMIT: ${{ github.event.after }}                # 푸시의 마지막 커밋 SHA
+
+  # 변경사항이 있으면, 변경사항 통합
+  integration:
+    needs: [scan-changes]                                   # scan-changes job이 성공적으로 실행되면 integration job 실행
+    if: needs.scan-changes.outputs.CHANGES > 0    # 변경사항이 있을 경우에만 실행
+    uses: kubespect/actions/.github/workflows/operation_integration.yaml@main    # Integration Workflow 호출
+    with:
+      NAME: server                          # 모듈 이름
+
+  # 통합 성공 시,커밋 SHA 가져오기
+  get-sha:
+    needs: [integration]                                    # integration job이 성공적으로 실행되면 get-sha job 실행
+    uses: kubespect/actions/.github/workflows/operation_get_sha.yaml@main        # Get SHA Workflow 호출
+
+  dockerhub-deployment:
+    needs: [get-sha, integration]                           # get-sha, integration job이 성공적으로 실행되면 ecr-deployment job 실행
+    uses: kubespect/actions/.github/workflows/operation_dockerhub_deployment.yaml@main # ECR Deployment Workflow 호출
+    with:
+      NEW_TAG: ${{ needs.get-sha.outputs.COMMIT_SHA }}      # 추가할 태그, 커밋의 SHA
+      REPOSITORY: server                                    # ECR 유저 이름
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }} # Dockerhub 유저 이름
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}       # Dockerhub 토큰
