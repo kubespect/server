@@ -2,11 +2,9 @@ FROM golang AS builder
 
 WORKDIR /app
 
-COPY go.mod go.sum ./
+COPY . .
 
 RUN go mod tidy
-
-COPY . .
 
 RUN go build -o server main.go
 
