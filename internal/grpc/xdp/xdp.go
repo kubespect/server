@@ -8,7 +8,7 @@ import (
 	"log"
 	"net"
 
-	pb "github.com/kubespect/server/protobuf/xdp"
+	pb "github.com/kubespect/protobuf/xdp"
 )
 
 type Server struct {

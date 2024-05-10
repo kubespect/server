@@ -5,6 +5,7 @@ go 1.22.2
 require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/gorilla/websocket v1.5.1
+	github.com/kubespect/protobuf v0.0.0-20240503080256-de7470994a1a
 	google.golang.org/grpc v1.63.2
 	google.golang.org/protobuf v1.34.0
 )

@@ -4,8 +4,8 @@ import (
 	"log"
 	"net"
 
+	pb "github.com/kubespect/protobuf/xdp"
 	"github.com/kubespect/server/internal/grpc/xdp"
-	pb "github.com/kubespect/server/protobuf/xdp"
 	"google.golang.org/grpc"
 )
 
