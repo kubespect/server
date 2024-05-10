@@ -23,15 +23,19 @@ func (s *Server) XDPStream(stream pb.XDP_XDPStreamServer) error {
 	for {
 		packet, err := stream.Recv()
 		if errors.Is(err, io.EOF) {
-			err := stream.SendAndClose(&pb.XDPResponse{
+			if err := stream.SendAndClose(&pb.XDPResponse{
 				Interface: "ens18",
-			})
-			return fmt.Errorf("stream closed: %w", err)
+			}); err != nil {
+				return fmt.Errorf("Error sending response: %w", err)
+			}
+			return nil
 		}
 		if err != nil {
-			log.Printf("Error receiving packet: %v", err)
+			return fmt.Errorf("Error receiving packet: %w", err)
 		}
-		log.Printf("%s:%d -> %s:%d, seq: %d, ack: %d, flags: %d, window: %d", PrintIP(packet.SrcIP), packet.SrcPort, PrintIP(packet.DstIP), packet.DstPort, packet.Seq, packet.Ack, packet.Flags, packet.Window)
+		if packet != nil {
+			log.Printf("%s:%d -> %s:%d, seq: %d, ack: %d, flags: %d, window: %d", PrintIP(packet.SrcIP), packet.SrcPort, PrintIP(packet.DstIP), packet.DstPort, packet.Seq, packet.Ack, packet.Flags, packet.Window)
+		}
 	}
 }
 
