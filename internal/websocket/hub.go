@@ -4,11 +4,11 @@ import (
 	"fmt"
 )
 
-// Hub is a struct that holds all the clients and the messages that are sent to them
+// Hub is a struct that holds all the clients and the messages that are sent to them.
 type Hub struct {
 	// Registered clients.
 	clients map[string]map[*Client]bool
-	//Unregistered clients.
+	// Unregistered clients.
 	unregister chan *Client
 	// Register requests from the clients.
 	register chan *Client
@@ -16,7 +16,7 @@ type Hub struct {
 	broadcast chan Message
 }
 
-// Message struct to hold message data
+// Message struct to hold message data.
 type Message struct {
 	Type      string `json:"type"`
 	Sender    string `json:"sender"`
@@ -34,27 +34,26 @@ func NewHub() *Hub {
 	}
 }
 
-// Core function to run the hub
+// Core function to run the hub.
 func (h *Hub) Run() {
 	for {
 		select {
 		// Register a client.
 		case client := <-h.register:
 			h.RegisterNewClient(client)
-			// Unregister a client.
+		// Unregister a client.
 		case client := <-h.unregister:
 			h.RemoveClient(client)
-			// Broadcast a message to all clients.
+		// Broadcast a message to all clients.
 		case message := <-h.broadcast:
 
-			//Check if the message is a type of "message"
+			// Check if the message is a type of "message".
 			h.HandleMessage(message)
-
 		}
 	}
 }
 
-// function check if room exists and if not create it and add client to it
+// function check if room exists and if not create it and add client to it.
 func (h *Hub) RegisterNewClient(client *Client) {
 	connections := h.clients[client.ID]
 	if connections == nil {
@@ -66,7 +65,7 @@ func (h *Hub) RegisterNewClient(client *Client) {
 	fmt.Println("Size of clients: ", len(h.clients[client.ID]))
 }
 
-// function to remvoe client from room
+// function to remvoe client from room.
 func (h *Hub) RemoveClient(client *Client) {
 	if _, ok := h.clients[client.ID]; ok {
 		delete(h.clients[client.ID], client)
@@ -75,10 +74,9 @@ func (h *Hub) RemoveClient(client *Client) {
 	}
 }
 
-// function to handle message based on type of message
+// function to handle message based on type of message.
 func (h *Hub) HandleMessage(message Message) {
-
-	//Check if the message is a type of "message"
+	// Check if the message is a type of "message".
 	if message.Type == "message" {
 		clients := h.clients[message.ID]
 		for client := range clients {
@@ -91,7 +89,7 @@ func (h *Hub) HandleMessage(message Message) {
 		}
 	}
 
-	//Check if the message is a type of "notification"
+	// Check if the message is a type of "notification".
 	if message.Type == "notification" {
 		fmt.Println("Notification: ", message.Content)
 		clients := h.clients[message.Recipient]
@@ -104,5 +102,4 @@ func (h *Hub) HandleMessage(message Message) {
 			}
 		}
 	}
-
 }

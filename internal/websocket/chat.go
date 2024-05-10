@@ -26,12 +26,12 @@ const (
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {
+	CheckOrigin: func(_ *http.Request) bool {
 		return true
 	},
 }
 
-// Client struct for websocket connection and message sending
+// Client struct for websocket connection and message sending.
 type Client struct {
 	ID   string
 	Conn *websocket.Conn
@@ -39,22 +39,30 @@ type Client struct {
 	hub  *Hub
 }
 
-// NewClient creates a new client
+// NewClient creates a new client.
 func NewClient(id string, conn *websocket.Conn, hub *Hub) *Client {
 	return &Client{ID: id, Conn: conn, send: make(chan Message, 256), hub: hub}
 }
 
-// Client goroutine to read messages from client
+// Client goroutine to read messages from client.
 func (c *Client) Read() {
-
 	defer func() {
 		c.hub.unregister <- c
 		c.Conn.Close()
 	}()
 
 	c.Conn.SetReadLimit(maxMessageSize)
-	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
-	c.Conn.SetPongHandler(func(string) error { c.Conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	err := c.Conn.SetReadDeadline(time.Now().Add(pongWait))
+	if err != nil {
+		return
+	}
+	c.Conn.SetPongHandler(func(string) error {
+		err := c.Conn.SetReadDeadline(time.Now().Add(pongWait))
+		if err != nil {
+			return fmt.Errorf("error setting read deadline: %w", err)
+		}
+		return nil
+	})
 	for {
 		var msg Message
 		err := c.Conn.ReadJSON(&msg)
@@ -66,7 +74,7 @@ func (c *Client) Read() {
 	}
 }
 
-// Client goroutine to write messages to client
+// Client goroutine to write messages to client.
 func (c *Client) Write() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
@@ -77,10 +85,16 @@ func (c *Client) Write() {
 	for {
 		select {
 		case message, ok := <-c.send:
-			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+			err := c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err != nil {
+				return
+			}
 			if !ok {
 				// The hub closed the channel.
-				c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
+				err := c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
+				if err != nil {
+					return
+				}
 				return
 			} else {
 				err := c.Conn.WriteJSON(message)
@@ -90,29 +104,31 @@ func (c *Client) Write() {
 				}
 			}
 		case <-ticker.C:
-			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+			err := c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err != nil {
+				return
+			}
 			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}
 		}
-
 	}
 }
 
-// Client closing channel to unregister client
+// Client closing channel to unregister client.
 func (c *Client) Close() {
 	close(c.send)
 }
 
-// Function to handle websocket connection and register client to hub and start goroutines
-func ServeWS(ctx *gin.Context, roomId string, hub *Hub) {
-	fmt.Print(roomId)
+// Function to handle websocket connection and register client to hub and start goroutines.
+func ServeWS(ctx *gin.Context, roomID string, hub *Hub) {
+	fmt.Print(roomID)
 	ws, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
-	client := NewClient(roomId, ws, hub)
+	client := NewClient(roomID, ws, hub)
 
 	hub.register <- client
 	go client.Write()

@@ -10,40 +10,36 @@ import (
 )
 
 func Start() {
-
 	grpcServer := grpc.NewGrpc()
 	go grpcServer.Start()
 
 	hub := ws.NewHub()
 	go hub.Run()
 	// gin.SetMode(gin.ReleaseMode)
-	//Start gin server
+	// Start gin server.
 	app := gin.Default()
 
 	app.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "Hello World",
 		})
-
 	})
 	app.GET("/ws/:roomId", func(c *gin.Context) {
-		roomId := c.Param("roomId")
-		ws.ServeWS(c, roomId, hub)
-
+		roomID := c.Param("roomID")
+		ws.ServeWS(c, roomID, hub)
 	})
 
 	log.Println(app.Run(":8080"))
 
-	// Get environment variables
+	// Get environment variables.
 
-	//Start websocket hub
+	// Start websocket hub.
 
-	//Start grpc server
+	// Start grpc server.
 
-	//Listen for agent vitals
+	// Listen for agent vitals.
 
-	//Retrieve data from alive agents
+	// Retrieve data from alive agents.
 
-	//Send data to frontend via websocket
-
+	// Send data to frontend via websocket.
 }

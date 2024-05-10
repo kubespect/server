@@ -11,11 +11,9 @@ import (
 
 type Grpc struct {
 	grpcServer *grpc.Server
-	// Server *xdp.Server
 }
 
 func NewGrpc() *Grpc {
-
 	grpcServer := grpc.NewServer()
 	pb.RegisterXDPServer(grpcServer, xdp.NewServer())
 	s := &Grpc{grpcServer: grpcServer}

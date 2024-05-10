@@ -2,10 +2,13 @@ package xdp
 
 import (
 	"encoding/binary"
-	pb "github.com/kubespect/server/protobuf/xdp"
+	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net"
+
+	pb "github.com/kubespect/server/protobuf/xdp"
 )
 
 type Server struct {
@@ -19,15 +22,15 @@ func NewServer() *Server {
 func (s *Server) XDPStream(stream pb.XDP_XDPStreamServer) error {
 	for {
 		packet, err := stream.Recv()
-		if err == io.EOF {
-			return stream.SendAndClose(&pb.XDPResponse{
+		if errors.Is(err, io.EOF) {
+			err := stream.SendAndClose(&pb.XDPResponse{
 				Interface: "ens18",
 			})
+			return fmt.Errorf("stream closed: %w", err)
 		}
 		if err != nil {
 			log.Printf("Error receiving packet: %v", err)
 		}
-		//log.Printf("Received packet %d: %v", packetCount, packet)
 		log.Printf("%s:%d -> %s:%d, seq: %d, ack: %d, flags: %d, window: %d", PrintIP(packet.SrcIP), packet.SrcPort, PrintIP(packet.DstIP), packet.DstPort, packet.Seq, packet.Ack, packet.Flags, packet.Window)
 	}
 }
