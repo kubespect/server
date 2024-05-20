@@ -34,12 +34,12 @@ func (s *Server) XDPStream(stream pb.XDP_XDPStreamServer) error {
 			return fmt.Errorf("Error receiving packet: %w", err)
 		}
 		if packet != nil {
-			log.Printf("%s:%d -> %s:%d, seq: %d, ack: %d, flags: %d, window: %d", PrintIP(packet.SrcIP), packet.SrcPort, PrintIP(packet.DstIP), packet.DstPort, packet.Seq, packet.Ack, packet.Flags, packet.Window)
+			log.Printf("%s:%d -> %s:%d, seq: %d, ack: %d, flags: %d, window: %d", printIP(packet.SrcIP), packet.SrcPort, printIP(packet.DstIP), packet.DstPort, packet.Seq, packet.Ack, packet.Flags, packet.Window)
 		}
 	}
 }
 
-func PrintIP(ip uint32) string {
+func printIP(ip uint32) string {
 	result := make(net.IP, 4)
 	binary.BigEndian.PutUint32(result, ip)
 
